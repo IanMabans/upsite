@@ -3,11 +3,13 @@
 ## Project Architecture
 
 This is the **Flutter mobile app** component of a three-part API monitoring SaaS system:
+
 1. **Flutter App (this repo)** - User-facing mobile interface
 2. **Laravel Backend** - API gateway and admin dashboard
 3. **Go Microservice** - Monitoring engine (performs actual checks)
 
 **Critical: Flutter ONLY consumes the Laravel API. It does NOT:**
+
 - Communicate with the Go service directly
 - Perform monitoring checks
 - Access the database
@@ -92,7 +94,9 @@ lib/
 ```
 
 ### Feature Module Structure
+
 Each feature follows this pattern:
+
 - **controllers/** - GetX controllers (business logic, state management)
 - **models/** - Data models (DTOs, entities)
 - **services/** - API service layer (Dio calls)
@@ -103,38 +107,41 @@ Example: `features/auth/controllers/auth_controller.dart` handles login state, w
 ## API Communication with Dio
 
 **All API calls go through Laravel using Dio:**
+
 - Base URL configured via environment variables
 - Development uses ngrok URLs
 - Authentication: Laravel Sanctum tokens stored via `flutter_secure_storage`
 - Auto-logout on 401 responses via Dio interceptor
 
 ### Dio Client Setup
+
 ```dart
 // core/network/dio_client.dart
 class DioClient {
   static final DioClient _instance = DioClient._internal();
   late final Dio dio;
-  
+
   factory DioClient() => _instance;
-  
+
   DioClient._internal() {
     dio = Dio(BaseOptions(
       baseUrl: const String.fromEnvironment('API_BASE_URL'),
       connectTimeout: const Duration(seconds: 30),
       receiveTimeout: const Duration(seconds: 30),
     ));
-    
+
     dio.interceptors.add(ApiInterceptor());
   }
 }
 ```
 
 ### API Service Pattern
+
 ```dart
 // features/auth/services/auth_service.dart
 class AuthService {
   final dio = DioClient().dio;
-  
+
   Future<UserModel> login(String email, String password) async {
     final response = await dio.post('/api/login', data: {
       'email': email,
@@ -150,31 +157,37 @@ class AuthService {
 Implement ONLY these features (see [LARAVEL_FLUTTER_ROADMAP.md](../LARAVEL_FLUTTER_ROADMAP.md)):
 
 ### Authentication
+
 - Login, register, logout flows
 - Token persistence with `flutter_secure_storage`
 - Session restoration on app launch
 
 ### Dashboard
+
 - List monitored endpoints
 - Current status (UP/DOWN)
 - Last check timestamp
 - Basic latency display (NO charts yet in Phase 1)
 
 ### Endpoint Management
+
 - CRUD operations (create, read, update, delete endpoints)
 - Enable/disable monitoring toggle
 - Fields: name, URL, monitor type, check interval
 
 ### Monitoring Results
+
 - Display recent results from Laravel
 - Show: status, response time, timestamp
 - Paginated lists (NOT computed in Flutter)
 
 ### Alerts
+
 - List alert history (read-only)
 - Display: alert type, timestamp, affected endpoint
 
 ### Profile
+
 - View profile info
 - Logout functionality
 - App version display
@@ -204,38 +217,43 @@ flutter build ios
 ## Code Conventions
 
 ### Linting
+
 - Uses `flutter_lints` package (see [analysis_options.yaml](../analysis_options.yaml))
 - Run `flutter analyze` before committing
 - Format all code with `flutter format .`
 
 ### Naming
+
 - Files: `snake_case.dart`
 - Classes: `PascalCase`
 - Variables/functions: `camelCase`
 - Constants: `camelCase` or `SCREAMING_SNAKE_CASE` for compile-time constants
 
 ### Widget Organization
+
 - Prefer `const` constructors where possible
 - Extract reusable widgets to `shared/widgets/`
 - Keep widget files focused (one main widget per file)
 - Use named parameters for widget constructors
 
 ### State Management with GetX
+
 - **Use GetX** for all state management, routing, and dependency injection
 - Controllers extend `GetxController`
 - Reactive state with `.obs` variables
 - Update UI with `Obx()` or `GetBuilder()`
 
 #### GetX Controller Example
+
 ```dart
 // features/auth/controllers/auth_controller.dart
 class AuthController extends GetxController {
   final AuthService _authService = AuthService();
   final _secureStorage = SecureStorage();
-  
+
   final isLoading = false.obs;
   final Rx<UserModel?> currentUser = Rx<UserModel?>(null);
-  
+
   Future<void> login(String email, String password) async {
     try {
       isLoading.value = true;
@@ -253,13 +271,14 @@ class AuthController extends GetxController {
 ```
 
 #### GetX View Example
+
 ```dart
 // features/auth/views/login_screen.dart
 class LoginScreen extends GetView<AuthController> {
   @override
   Widget build(BuildContext context) {
-    return Obx(() => controller.isLoading.value 
-      ? LoadingIndicator() 
+    return Obx(() => controller.isLoading.value
+      ? LoadingIndicator()
       : LoginForm());
   }
 }
@@ -282,14 +301,18 @@ class LoginScreen extends GetView<AuthController> {
 ## Common Patterns
 
 ### API Error Handling
+
 All API calls should handle:
+
 - Network errors (no connection)
 - 401 Unauthorized (trigger logout)
 - 422 Validation errors (display field errors)
 - 500 Server errors (show generic error message)
 
 ### Loading States
+
 Every async operation should show:
+
 - Loading indicator during fetch
 - Error message on failure
 - Empty state when no data
@@ -298,20 +321,22 @@ Every async operation should show:
 ## Dependencies
 
 Current dependencies (see [pubspec.yaml](../pubspec.yaml)):
+
 - `cupertino_icons` - iOS-style icons
 - `flutter_lints` - Linting rules
 
 Phase 1 required packages:
+
 ```yaml
 dependencies:
-  get: ^4.6.6              # State management + routing
-  dio: ^5.4.0              # HTTP client
-  flutter_secure_storage: ^9.0.0  # Secure token storage
-  intl: ^0.19.0            # Date formatting
-  
+  get: ^4.6.6 # State management + routing
+  dio: ^5.4.0 # HTTP client
+  flutter_secure_storage: ^9.0.0 # Secure token storage
+  intl: ^0.19.0 # Date formatting
+
 dev_dependencies:
-  mockito: ^5.4.4          # Mocking for tests
-  build_runner: ^2.4.7     # Code generation
+  mockito: ^5.4.4 # Mocking for tests
+  build_runner: ^2.4.7 # Code generation
 ```
 
 ## Platform Support
@@ -326,13 +351,14 @@ dev_dependencies:
 **CRITICAL: Add documentation after EVERY implementation:**
 
 ### Code Documentation
+
 - Add doc comments (`///`) for all public classes, methods, and properties
 - Include usage examples in complex logic
 - Document API response structures in service files
 
 ```dart
 /// Authenticates user with email and password.
-/// 
+///
 /// Returns [UserModel] on success.
 /// Throws [DioException] on network errors.
 /// Throws [UnauthorizedException] on invalid credentials.
@@ -342,37 +368,45 @@ Future<UserModel> login(String email, String password) async {
 ```
 
 ### Feature Documentation
+
 Create `README.md` in each feature folder documenting:
+
 - Feature purpose and user flows
 - API endpoints used
 - Models and their fields
 - Known issues or limitations
 
 Example: `features/auth/README.md`
+
 ```markdown
 # Authentication Feature
 
 ## API Endpoints
+
 - POST /api/login
 - POST /api/register
 - POST /api/logout
 
 ## Models
+
 - UserModel: id, name, email, token
 
 ## Controllers
+
 - AuthController: Handles login/register/logout state
 ```
 
 ## Important Best Practices
 
 ### Error Handling
+
 - **Always** wrap API calls in try-catch blocks
 - Use GetX snackbars for user-facing errors: `Get.snackbar('Error', message)`
 - Log errors for debugging: `debugPrint('Error: $e')`
 - Never expose raw error messages to users
 
 ### GetX Dependency Injection
+
 ```dart
 // routes/app_pages.dart
 GetPage(
@@ -385,6 +419,7 @@ GetPage(
 ```
 
 ### Form Validation
+
 - Use `GetX` form validation or custom validators
 - Store validators in `core/utils/validators.dart`
 - Validate before API calls
@@ -400,6 +435,7 @@ class Validators {
 ```
 
 ### API Response Models
+
 - Create model classes with `fromJson` and `toJson` methods
 - Use code generation for complex models (json_serializable)
 - Store models in `features/<feature>/models/`
@@ -410,13 +446,13 @@ class EndpointModel {
   final String name;
   final String url;
   final bool isActive;
-  
+
   EndpointModel.fromJson(Map<String, dynamic> json)
       : id = json['id'],
         name = json['name'],
         url = json['url'],
         isActive = json['is_active'];
-        
+
   Map<String, dynamic> toJson() => {
     'name': name,
     'url': url,
@@ -426,11 +462,13 @@ class EndpointModel {
 ```
 
 ### Loading & Empty States
+
 - Show loading indicators during API calls
 - Display empty states when no data exists
 - Use shared widgets from `shared/widgets/`
 
 ### Navigation with GetX
+
 ```dart
 // Named routes (preferred)
 Get.toNamed(Routes.DASHBOARD);
@@ -443,6 +481,7 @@ Get.toNamed(Routes.ENDPOINT_DETAIL, arguments: endpointId);
 ```
 
 ### Constants Organization
+
 - API endpoints: `core/network/api_endpoints.dart`
 - String constants: `shared/constants/string_constants.dart`
 - Colors: `shared/themes/app_colors.dart`

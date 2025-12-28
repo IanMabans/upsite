@@ -6,7 +6,7 @@
 /// Example:
 /// ```bash
 /// flutter run --dart-define=API_BASE_URL=https://api.example.com
-/// ```
+/// ```https://holding-hopkins-gdp-played.trycloudflare.com 
 class Env {
   Env._();
 

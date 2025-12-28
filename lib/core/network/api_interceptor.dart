@@ -28,6 +28,9 @@ class ApiInterceptor extends Interceptor {
     options.headers['Accept'] = 'application/json';
     options.headers['Content-Type'] = 'application/json';
 
+    // Skip ngrok browser warning (for development with ngrok)
+    options.headers['ngrok-skip-browser-warning'] = 'true';
+
     // Debug logging
     if (kDebugMode) {
       debugPrint('┌─────────────────────────────────────────────────');

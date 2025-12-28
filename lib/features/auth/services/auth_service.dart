@@ -29,7 +29,7 @@ class AuthService {
   }) async {
     final response = await _dio.post(
       ApiEndpoints.login,
-      data: {'email': email, 'password': password},
+      data: {'email': email, 'password': password, 'device_name': 'mobile_app'},
     );
 
     return UserModel.fromJson(response.data);
@@ -56,6 +56,7 @@ class AuthService {
         'email': email,
         'password': password,
         'password_confirmation': passwordConfirmation,
+        'device_name': 'mobile_app',
       },
     );
 
